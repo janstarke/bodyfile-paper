@@ -1,4 +1,8 @@
-\documentclass[a4paper]{article}
+\documentclass[twocolumn]{article}
+
+\usepackage{url}
+\usepackage{enumitem}
+\usepackage{amsmath}
 
 \newcommand{\bodyfile}{\texttt{bodyfile}}
 
@@ -18,5 +22,45 @@
 
 \section{The \bodyfile\ format}
 
-A lot of forensic tools collect data which are related with time information. We can see sich information as sets of events. Those data must be related to each other, which normally means that they are ordered chronologically, so that one can which event occured after another.
+A lot of forensic tools collect data which are related with time information. We can see sich information as sets of events. Those data must be related to each other, which normally means that they are ordered chronologically, so that one can see which event occured after another. Unfortunately, a lot of events are extracted from many different sources, such as various filesystems, the Windows Registry, several log files and so on. Common tools which work with the \bodyfile\ format include
+
+\begin{itemize}
+    \item \texttt{fls}, which is part of The Sleuthkit\footnote{\url{https://www.sleuthkit.org/}}
+    \item \texttt{evtx2bodyfile} can be used to convert Windows Event Log (\texttt{evtx}) files into \bodyfile
+    \item \texttt{mactime} is the standard to which is used to sort \bodyfile s and generate human readable text- as well as csv-files
+    \item \texttt{plaso}, which has its own SQLite based timeline format, is also able to consume \bodyfile s
+\end{itemize}
+
+So, it seems that we have a common standard of how to describe events and their relation in time. It seems that we can use this standard to correlate a lot of different event sources to find interdependencies between events from different sources. It seems that because of the broad use, \bodyfile\ is as base for sound forensic work. We will see that this is not the case.
+
+\subsection{Format of \bodyfile\ files}
+
+The \bodyfile\ format is text based, which means that nearly every commandline tool and text editor can work with it. A file in this format consists of a list von lines, where each line describes a single file which may be found on the filesystem under analysis, together with some metainformation about the file as well as the timestamps related to the file. Each line consists of a list of fields which are separated by the pipe character. The following fields are being used:
+
+\begin{description}[font=\ttfamily]
+\item[MD5] MD5 hashsum of the file, or the number $0$
+\item[name] name of the file. Normally the fully qualified path is specified here
+\item[inode] inode number or, on systems where no inodes are being used
+\item[mode] describes \emph{who} is permitted to do \emph{what} with this file. This field must be specified in the common unixoid syntax, e.g. \texttt{rwxr-xr-x} specifies that the owner of the file is allowed to read (\texttt{r}), write (\texttt{w}) and execute (\texttt{x}) the file, while members of the owning group as well as all others may read or execute the file, but are not allowed to write it. This field only makes sense when the filesystem has such a simple permission theme. As far as it comes to access control lists, this syntax is not sufficient anymore.
+\item[UID] (numerical) identifier of the files owner, or $0$ if this cannot be specified. For example, Windows dos not have numerical user identifiers, but uses Security Identifiers\footnote{\url{https://docs.microsoft.com/en-us/windows/security/identity-protection/access-control/security-identifiers}} to identify users.
+\item[GID] (numerical) identifier of the group which owns the file. the same restriction as with the \emph{UID} applies here as well.
+\item[size] size of the file in bytes
+\item[atime] specifies at which time the file has lastly been \emph{accessed}, as epoch time (number of seconds since January $1^\text{st}$, 1970). It is possible that this fields contains $-1$, which means that this value must be ignored. The same also applies to the other three timestamps.
+\item[mtime] time of the last \emph{modification} of the file, as epoch time
+\item[ctime] time of the last \emph{change} to the file's \emph{meta-information}, as epoch time
+\item[crtime] time of the files \emph{creation} (birthtime), as epoch time
+\end{description}
+
+\subsection{What's wrong with \bodyfile?}
+
+A lot of people have found one or more simple problems which occured during their work with the \bodyfile\ format. Fortunately, a lot of those problems are collected at the forensikswiki page\footnote{\url{https://forensicswiki.xyz/wiki/index.php?title=Bodyfile}}:
+
+\subsubsection{Missing timezone information}
+
+Despite a \bodyfile\ entry has multiple timestamps, there is no information about from which timezone these timestamps has been collected. Also, there is no information if daylight savings should be applied. Most unixoid systems store their timestamps in Universal Time Coordinated (UTC), but it is -- especially in forensic software -- bad practice to silently assume such information. There are a lot of timestamp formats (e.g. RFC3339) which also contain a timezone information and should better be used
+
+\subsubsection{Unclear file encoding}
+
+When \bodyfile\ was created, textfiles where basically ASCII encoded files. Also, filesystems used ASCII to encode filenames, so there was no need to support other encodings. But modern operating system support a lot of different encoding to be efficiently used by native speakers all over the world. So, a textfile now could be encoded in ASCII, UTF-8, UTF-16LE or in any other single- or multi-byte encoding. This makes it hard to correctly interpret filenames in the \bodyfile.
+
 \end{document}
