@@ -1,16 +1,18 @@
 \documentclass[twocolumn]{article}
 
+\usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
 \usepackage{url}
 \usepackage{enumitem}
 \usepackage{amsmath}
+
+%\usepackage[style=alphabetic]{biblatex}
+%\addbibresource{bodyfile-paper}
 
 \newcommand{\bodyfile}{\texttt{bodyfile}}
 
 \title{Improving the \bodyfile\ format: a suggestion}
 \author{Jan Starke <jan.starke@t-systems.com>}
 \date{\today}
-
-
 
 \begin{document}
 
@@ -25,7 +27,7 @@
 A lot of forensic tools collect data which are related with time information. We can see sich information as sets of events. Those data must be related to each other, which normally means that they are ordered chronologically, so that one can see which event occured after another. Unfortunately, a lot of events are extracted from many different sources, such as various filesystems, the Windows Registry, several log files and so on. Common tools which work with the \bodyfile\ format include
 
 \begin{itemize}
-    \item \texttt{fls}, which is part of The Sleuthkit\footnote{\url{https://www.sleuthkit.org/}}
+    \item \texttt{fls}, which is part of The Sleuth Kit (\cite{SLEUTHKIT})
     \item \texttt{evtx2bodyfile} can be used to convert Windows Event Log (\texttt{evtx}) files into \bodyfile
     \item \texttt{mactime} is the standard to which is used to sort \bodyfile s and generate human readable text- as well as csv-files
     \item \texttt{plaso}, which has its own SQLite based timeline format, is also able to consume \bodyfile s
@@ -53,14 +55,17 @@ The \bodyfile\ format is text based, which means that nearly every commandline t
 
 \subsection{What's wrong with \bodyfile?}
 
-A lot of people have found one or more simple problems which occured during their work with the \bodyfile\ format. Fortunately, a lot of those problems are collected at the forensikswiki page\footnote{\url{https://forensicswiki.xyz/wiki/index.php?title=Bodyfile}}:
+A lot of people have found one or more simple problems which occured during their work with the \bodyfile\ format. Fortunately, a lot of those problems are collected at the forensikswiki page (\cite{bodyfile}):
 
 \subsubsection{Missing timezone information}
 
-Despite a \bodyfile\ entry has multiple timestamps, there is no information about from which timezone these timestamps has been collected. Also, there is no information if daylight savings should be applied. Most unixoid systems store their timestamps in Universal Time Coordinated (UTC), but it is -- especially in forensic software -- bad practice to silently assume such information. There are a lot of timestamp formats (e.g. RFC3339) which also contain a timezone information and should better be used
+Despite a \bodyfile\ entry has multiple timestamps, there is no information about from which timezone these timestamps has been collected. Also, there is no information if daylight savings should be applied. Most unixoid systems store their timestamps in Universal Time Coordinated (UTC), but it is -- especially in forensic software -- bad practice to silently assume such information. There are a lot of timestamp formats (e.g.~\cite{rfc3339}) which also contain a timezone information and should better be used
 
 \subsubsection{Unclear file encoding}
 
 When \bodyfile\ was created, textfiles where basically ASCII encoded files. Also, filesystems used ASCII to encode filenames, so there was no need to support other encodings. But modern operating system support a lot of different encoding to be efficiently used by native speakers all over the world. So, a textfile now could be encoded in ASCII, UTF-8, UTF-16LE or in any other single- or multi-byte encoding. This makes it hard to correctly interpret filenames in the \bodyfile.
+
+\bibliographystyle{plain}
+\bibliography{bodyfile-paper}
 
 \end{document}
