@@ -5,6 +5,9 @@
 \usepackage{hyperref}
 \usepackage{enumitem}
 \usepackage{amsmath}
+\usepackage{natbib}
+
+\setcitestyle{authoryear,open={(},close={)}} %Citation-related commands
 
 \usepackage{listings}
 \usepackage{float}
@@ -61,7 +64,7 @@ The \bodyfile\ format is text based, which means that nearly every commandline t
 \item[MD5] MD5 hashsum of the file, or the number $0$
 \item[name] name of the file. Normally the fully qualified path is specified here
 \item[inode] inode number or, on systems where no inodes are being used
-\item[mode] describes \emph{who} is permitted to do \emph{what} with this file. This field must be specified in the common unixoid syntax, e.g. \texttt{rwxr-xr-x} specifies that the owner of the file is allowed to read (\texttt{r}), write (\texttt{w}) and execute (\texttt{x}) the file, while members of the owning group as well as all others may read or execute the file, but are not allowed to write it. This field only makes sense when the filesystem has such a simple permission theme. As far as it comes to access control lists, this syntax is not sufficient anymore.
+\item[mode] describes what kind of a file this is and \emph{who} is permitted to do \emph{what} with this file. This field must be specified in the common unixoid syntax, e.g. \texttt{r/rwxr-xr-x} specifies this is a \texttt{r}egular file (\texttt{d} would denote a \texttt{d}irectory), that the owner of the file is allowed to read (\texttt{r}), write (\texttt{w}) and execute (\texttt{x}) the file, while members of the owning group as well as all others may read or execute the file, but are not allowed to write it. This field only makes sense when the filesystem has such a simple permission theme. As far as it comes to access control lists, this syntax is not sufficient anymore.
 \item[UID] (numerical) identifier of the files owner, or $0$ if this cannot be specified. For example, Windows dos not have numerical user identifiers, but uses Security Identifiers (\cite{SecurityIdentifiers}) to identify users.
 \item[GID] (numerical) identifier of the group which owns the file. the same restriction as with the \emph{UID} applies here as well.
 \item[size] size of the file in bytes
@@ -71,7 +74,7 @@ The \bodyfile\ format is text based, which means that nearly every commandline t
 \item[crtime] time of the files \emph{creation} (birthtime), as epoch time
 \end{description}
 
-\begin{lstfloat*}
+\begin{lstfloat*}[hbt]
 \caption{Sample of a \bodyfile}
 \label{lst:bodyfile}
 \begin{lstlisting}
@@ -90,13 +93,25 @@ A lot of people have found one or more simple problems which occured during thei
 
 \subsubsection{Missing timezone information}
 
-Despite a \bodyfile\ entry has multiple timestamps, there is no information about from which timezone these timestamps has been collected. Also, there is no information if daylight savings should be applied. Most unixoid systems store their timestamps in Universal Time Coordinated (UTC), but it is -- especially in forensic software -- bad practice to silently assume such information. There are a lot of timestamp formats (e.g.~\cite{rfc3339}) which also contain a timezone information and should better be used
+Despite a \bodyfile\ entry has multiple timestamps, there is no information about from which timezone these timestamps has been collected. Also, there is no information if daylight savings should be applied. Most unixoid systems store their timestamps in Universal Time Coordinated (UTC), but it is -- especially in forensic software -- bad practice to silently assume such information. There are a lot of timestamp formats (e.g.~\cite{rfc3339}) which also contain a timezone information and should better be used.
+
+Why is this a problem? Imaging an analyst has two different event sources which must be correlated. Then a simple approach was to generate a \bodyfile\ from each of those sources, join them together and sort them using \texttt{mactime}. This does only generate a useful result if both event sources use the same timezone or if the generator of the \bodyfile{}s know how to normalize the timezones. Because the \bodyfile\ does not contain timezone information, \texttt{mactime} will not be able to take this into account. 
 
 \subsubsection{Unclear file encoding}
 
 When \bodyfile\ was created, textfiles where basically ASCII encoded files. Also, filesystems used ASCII to encode filenames, so there was no need to support other encodings. But modern operating system support a lot of different encoding to be efficiently used by native speakers all over the world. So, a textfile now could be encoded in ASCII, UTF-8, UTF-16LE or in any other single- or multi-byte encoding. This makes it hard to correctly interpret filenames in the \bodyfile.
 
-\bibliographystyle{plain}
+\subsubsection{Missing origin information}
+
+One could think that origin of the event information was clear: It was (mostly) the filesystem. But modern filesystems have multiple information about one single file, which might not identitical. For example, an NTFS filesystem could contain the following information about a file:
+
+\begin{description}[font=\ttfamily]
+    \item[\$STANDARD\_INFORMATION] is an attribute which contains the commonly used timestamps, which would be used in a \bodyfile
+    \item[\$FILE\_NAME] attributes contain the name of the file, as well as an additional set of four timestamps. Furthermore, one single can have multiple \texttt{\$FILE\_NAME} attributes, e.g. to specify a short (8.3) name (\texttt{FILE\_NAME\_DOS}) in addition to its complete filename (\texttt{FILE\_NAME\_NTFS}). So, the Directory \texttt{Documents and Settings} contains an additional \texttt{\$FILE\_NAME} attribute with the name \texttt{Docume\~{}1}. Each of those \texttt{\$FILE\_NAME} attribute has its own set of modified/accessed/changed/birth timestamps \citep[p.308-309]{carrier2005file}.
+    \item[\$UsnJrnl] (Update sequence number journal) is a special system file which tracks changes to file metadata. Every change is connected to a timestamp, so this file can also be the origin of filesystems events. Typically, events like movement or name changes are tracked here.
+\end{description}
+
+\bibliographystyle{abbrvnat}
 \bibliography{bodyfile-paper}
 
 \end{document}
