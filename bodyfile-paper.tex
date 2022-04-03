@@ -127,6 +127,16 @@ But there are more notions of links in other filesystems. For example, NTFS supp
 
 As already described, \bodyfile\ uses the pipe character (\texttt{|}) as field separator. One might wondering which filesystems allowed the use of the pipe character in its filenames. But keep in mind that there many different possible event sources. For example, one could use some log file which tracks command executions, as event source. As a command could contain a pipe character, the bodyfile would so, too. As this character could also appear in the contents of some field, this would make the parsing of \bodyfile\ lines difficult. The current implementation of \texttt{mactime} is not able to handle \bodyfile\ lines with pipe characters in one or more of its fields.
 
+\section{Alternatives to \bodyfile}
+
+\subsection{Timeline}
+
+\subsection{Plaso \& SQLite}
+
+\subsection{elasticsearch}
+
+\section{Desired properties of timeline formats}
+
 \bibliographystyle{abbrvnat}
 \bibliography{bodyfile-paper}
 
