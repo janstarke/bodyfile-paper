@@ -6,6 +6,7 @@
 \usepackage{enumitem}
 \usepackage{amsmath}
 \usepackage{natbib}
+\usepackage{csquotes}
 
 \setcitestyle{authoryear,open={(},close={)}} %Citation-related commands
 
@@ -30,8 +31,7 @@
     basicstyle=\normalsize\ttfamily
 }
 
-%\usepackage[style=alphabetic]{biblatex}
-%\addbibresource{bodyfile-paper}
+\hyphenation{time-stamps}
 
 \newcommand{\bodyfile}{\texttt{bodyfile}}
 
@@ -115,7 +115,17 @@ One could think that origin of the event information was clear: It was (mostly) 
     \item[\$UsnJrnl] (Update sequence number journal) is a special system file which tracks changes to file metadata. Every change is connected to a timestamp, so this file can also be the origin of filesystems events. Typically, events like movement or name changes are tracked here.
 \end{description}
 
-Historically, \texttt{fls} and also the \bodyfile\ format have been dedicated to unixoid operating systems (and fileystems), and had sufficient functionality for this use case. To adapt to newer filesystems, \texttt{fls} has maxed out the capabilities of the \bodyfile\ format. So, to enable handling of \texttt{\$FILE\_NAME} attributes, an additional entry is created for every file with the string \lstinline[style=inline]!($FILE_NAME)! as suffix in the \texttt{filename} field. We will see further situations where the atomarity of the \texttt{filename} field was broken, because \bodyfile\ lacked the missing field.
+Historically, \texttt{fls} and also the \bodyfile\ format have been dedicated to unixoid operating systems (and fileystems), and had sufficient functionality for this use case. To adapt to newer filesystems, \texttt{fls} has maxed out the capabilities of the \bodyfile\ format. So, to enable handling of \texttt{\$FILE\_NAME} attributes, \texttt{fls} creates an additional entry for every file, and adds the string \lstinline[style=inline]!($FILE_NAME)! as suffix to the \texttt{filename} field. We will see further situations where the atomicity of the \texttt{filename} field was broken, because \bodyfile\ lacked the missing field.
+
+\subsubsection{Handling of links breaks atomicity}
+
+Most filesystems support one or more types of links. Unixoid filesystems have a notion of \emph{hard link}, which is an additional inode that points to the same data, als \emph{symbolic link}, which is an inode that points to another inode (roughly speaking). Technically, using hard links it's not possible to tell which of the links was the \enquote{original} file, so hard links are displayed as distinct files. When there is a symbolic link, say \lstinline[style=inline]!file_b.txt! which points to \lstinline[style=inline]!file_a.txt!, \texttt{fls} knows that this is a symbolic link, an appends the suffix \texttt{\hbox{->} \emph{symbolic\_link\_target}} to the \texttt{filename} field. Thus, in our example, the \texttt{filename} field of \lstinline[style=inline]!file_b.txt! would contain the value \lstinline[style=inline]!file_b.txt -> file_a.txt!.
+
+But there are more notions of links in other filesystems. For example, NTFS supports a third link type called \emph{junction} \citep{HardLinksAndJunctions}. Neither NTFS symbolic links nor junctions are currently supported by \texttt{fls} \citep{sleuthit-2645}. However, there is also no support for such an information in the \bodyfile\ format.
+
+\subsubsection{Unclear escaping policy}
+
+As already described, \bodyfile\ uses the pipe character (\texttt{|}) as field separator. One might wondering which filesystems allowed the use of the pipe character in its filenames. But keep in mind that there many different possible event sources. For example, one could use some log file which tracks command executions, as event source. As a command could contain a pipe character, the bodyfile would so, too. As this character could also appear in the contents of some field, this would make the parsing of \bodyfile\ lines difficult. The current implementation of \texttt{mactime} is not able to handle \bodyfile\ lines with pipe characters in one or more of its fields.
 
 \bibliographystyle{abbrvnat}
 \bibliography{bodyfile-paper}
