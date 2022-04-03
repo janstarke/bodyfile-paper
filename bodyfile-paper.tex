@@ -26,6 +26,10 @@
     literate={|}{|}1
 }
 
+\lstdefinestyle{inline}{
+    basicstyle=\normalsize\ttfamily
+}
+
 %\usepackage[style=alphabetic]{biblatex}
 %\addbibresource{bodyfile-paper}
 
@@ -110,6 +114,8 @@ One could think that origin of the event information was clear: It was (mostly) 
     \item[\$FILE\_NAME] attributes contain the name of the file, as well as an additional set of four timestamps. Furthermore, one single can have multiple \texttt{\$FILE\_NAME} attributes, e.g. to specify a short (8.3) name (\texttt{FILE\_NAME\_DOS}) in addition to its complete filename (\texttt{FILE\_NAME\_NTFS}). So, the Directory \texttt{Documents and Settings} contains an additional \texttt{\$FILE\_NAME} attribute with the name \texttt{Docume\~{}1}. Each of those \texttt{\$FILE\_NAME} attribute has its own set of modified/accessed/changed/birth timestamps \citep[p.308-309]{carrier2005file}.
     \item[\$UsnJrnl] (Update sequence number journal) is a special system file which tracks changes to file metadata. Every change is connected to a timestamp, so this file can also be the origin of filesystems events. Typically, events like movement or name changes are tracked here.
 \end{description}
+
+Historically, \texttt{fls} and also the \bodyfile\ format have been dedicated to unixoid operating systems (and fileystems), and had sufficient functionality for this use case. To adapt to newer filesystems, \texttt{fls} has maxed out the capabilities of the \bodyfile\ format. So, to enable handling of \texttt{\$FILE\_NAME} attributes, an additional entry is created for every file with the string \lstinline[style=inline]!($FILE_NAME)! as suffix in the \texttt{filename} field. We will see further situations where the atomarity of the \texttt{filename} field was broken, because \bodyfile\ lacked the missing field.
 
 \bibliographystyle{abbrvnat}
 \bibliography{bodyfile-paper}
